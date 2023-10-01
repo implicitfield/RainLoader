@@ -109,6 +109,31 @@ cleanup:
     return ptr;
 }
 
+static void GetBasicMemoryInfo(struct multiboot_tag_mmap* mmap, multiboot_uint32_t* lower, multiboot_uint32_t* upper) {
+    *lower = 0;
+    *upper = 0;
+
+    for (UINTN i = 0; i < mmap->size; i++) {
+        if (mmap->entries[i].type == MULTIBOOT_MEMORY_AVAILABLE) {
+            if (mmap->entries[i].addr < 0x100000) {
+                if (mmap->entries[i].addr + mmap->entries[i].len > 0x100000) {
+                    UINTN low_len = 0x100000 - mmap->entries[i].addr;
+
+                    *lower += low_len;
+                    *upper += mmap->entries[i].len - low_len;
+                } else {
+                    *lower += mmap->entries[i].len;
+                }
+            } else {
+                *upper += mmap->entries[i].len;
+            }
+        }
+    }
+
+    *lower /= 1024;
+    *upper /= 1024;
+}
+
 EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
     EFI_STATUS Status = EFI_SUCCESS;
     UINTN HeaderOffset = 0;
@@ -159,6 +184,7 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
                         case MULTIBOOT_TAG_TYPE_EFI_MMAP:
                         case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
                         case MULTIBOOT_TAG_TYPE_ELF_SECTIONS:
+                        case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
                             break;
 
                         // These may not always be available
@@ -406,7 +432,7 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
     EFI_MEMORY_DESCRIPTOR* MemoryMap = AllocatePool(MemoryMapSize);
 
     // Allocate all the space we will need
-    UINT8* start_from = PushBootParams(NULL, OFFSET_OF(struct multiboot_tag_efi_mmap, efi_mmap) + MemoryMapSize + OFFSET_OF(struct multiboot_tag_mmap, entries) + MemoryMapSize);
+    UINT8* start_from = PushBootParams(NULL, OFFSET_OF(struct multiboot_tag_efi_mmap, efi_mmap) + MemoryMapSize + OFFSET_OF(struct multiboot_tag_mmap, entries) + MemoryMapSize + sizeof(struct multiboot_tag_basic_meminfo));
 
     EFI_CHECK(gBS->GetMemoryMap(&MemoryMapSize, MemoryMap, &MapKey, &DescriptorSize, &DescriptorVersion));
     UINTN EntryCount = (MemoryMapSize / DescriptorSize);
@@ -434,7 +460,12 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
     efi_mmap->descr_vers = DescriptorVersion;
     CopyMem(efi_mmap->efi_mmap, MemoryMap, MemoryMapSize);
 
-    struct multiboot_tag* end_tag = (struct multiboot_tag*)ALIGN_VALUE((UINTN)efi_mmap + efi_mmap->size, MULTIBOOT_TAG_ALIGN);
+    struct multiboot_tag_basic_meminfo* basic_meminfo = (struct multiboot_tag_basic_meminfo*)ALIGN_VALUE((UINTN)efi_mmap + efi_mmap->size, MULTIBOOT_TAG_ALIGN);
+    basic_meminfo->type = MULTIBOOT_TAG_TYPE_BASIC_MEMINFO;
+    basic_meminfo->size = sizeof(struct multiboot_tag_basic_meminfo);
+    GetBasicMemoryInfo(mmap, &basic_meminfo->mem_lower, &basic_meminfo->mem_upper);
+
+    struct multiboot_tag* end_tag = (struct multiboot_tag*)ALIGN_VALUE((UINTN)basic_meminfo + basic_meminfo->size, MULTIBOOT_TAG_ALIGN);
     end_tag->type = MULTIBOOT_TAG_TYPE_END;
     end_tag->size = sizeof(struct multiboot_tag);
 
