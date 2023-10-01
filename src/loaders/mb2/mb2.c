@@ -126,6 +126,7 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
     TRACE("Found header at offset %d", HeaderOffset);
 
     UINTN EntryAddressOverride = 0;
+    multiboot_uint32_t MinAddress = 0;
     multiboot_uint32_t MaxAddress = 0;
     BOOLEAN MustHaveOldAcpi = FALSE;
     BOOLEAN MustHaveNewAcpi = FALSE;
@@ -224,7 +225,8 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
             case MULTIBOOT_HEADER_TAG_RELOCATABLE: {
                 IsRelocatable = TRUE;
                 struct multiboot_header_tag_relocatable* relocation_tag = (void*)tag;
-                // FIXME: Take relocation_tag->min_addr and relocation_tag->align into account.
+                // FIXME: Take relocation_tag->align into account.
+                MinAddress = relocation_tag->min_addr;
                 MaxAddress = relocation_tag->max_addr;
             } break;
 
@@ -333,11 +335,12 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
     CHECK_AND_RETHROW(LoadElf(Entry->Fs, Entry->Path, (UINTN*)&Elf, &KernelSize, MaxAddress));
     CHECK_AND_RETHROW(ParseElfImage(Elf, &Context));
 
-    EFI_PHYSICAL_ADDRESS NewBase = MaxAddress;
+    EFI_PHYSICAL_ADDRESS NewBase = MaxAddress - EFI_PAGES_TO_SIZE(EFI_SIZE_TO_PAGES(Context.ImageSize));
     if (Context.ReloadRequired) {
         TRACE("ElfLib requested reload");
         EFI_CHECK(gBS->AllocatePages(AllocateMaxAddress, gKernelAndModulesMemoryType, EFI_SIZE_TO_PAGES(Context.ImageSize), &NewBase));
-        TRACE("SIZE: %d, BASE: %d", EFI_SIZE_TO_PAGES(Context.ImageSize), NewBase);
+        if (NewBase < MinAddress)
+            CHECK_FAIL_TRACE("Unable to allocate memory region between 0x%x and 0x%x", MinAddress, MaxAddress);
         Context.ImageAddress = (VOID*)NewBase;
     } else {
         Context.ImageAddress = Context.FileBase;
