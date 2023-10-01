@@ -31,6 +31,8 @@ static UINTN mBootParamsSize = 0;
 
 extern void JumpToMB2Kernel(void* KernelStart, void* KernelParams);
 
+#define ALIGN_DOWN(p, s) ((UINTN)((p) & -(s)));
+
 // TODO: Make this force allocations below 4GB
 static void* PushBootParams(void* data, UINTN size) {
     UINTN AllocationSize = ALIGN_VALUE(size, MULTIBOOT_TAG_ALIGN);
@@ -126,6 +128,7 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
     TRACE("Found header at offset %d", HeaderOffset);
 
     UINTN EntryAddressOverride = 0;
+    multiboot_uint32_t Alignment = 0;
     multiboot_uint32_t MinAddress = 0;
     multiboot_uint32_t MaxAddress = 0;
     BOOLEAN MustHaveOldAcpi = FALSE;
@@ -225,7 +228,10 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
             case MULTIBOOT_HEADER_TAG_RELOCATABLE: {
                 IsRelocatable = TRUE;
                 struct multiboot_header_tag_relocatable* relocation_tag = (void*)tag;
-                // FIXME: Take relocation_tag->align into account.
+                // FIXME: Take relocation_tag->preference into account.
+                // Verify that the alignment is a power of 2.
+                CHECK(relocation_tag->align > 0 && (relocation_tag->align & (relocation_tag->align - 1)) == 0);
+                Alignment = relocation_tag->align;
                 MinAddress = relocation_tag->min_addr;
                 MaxAddress = relocation_tag->max_addr;
             } break;
@@ -335,7 +341,7 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
     CHECK_AND_RETHROW(LoadElf(Entry->Fs, Entry->Path, (UINTN*)&Elf, &KernelSize, MaxAddress));
     CHECK_AND_RETHROW(ParseElfImage(Elf, &Context));
 
-    EFI_PHYSICAL_ADDRESS NewBase = MaxAddress - EFI_PAGES_TO_SIZE(EFI_SIZE_TO_PAGES(Context.ImageSize));
+    EFI_PHYSICAL_ADDRESS NewBase = ALIGN_DOWN(MaxAddress - EFI_PAGES_TO_SIZE(EFI_SIZE_TO_PAGES(Context.ImageSize)), Alignment);
     if (Context.ReloadRequired) {
         TRACE("ElfLib requested reload");
         EFI_CHECK(gBS->AllocatePages(AllocateMaxAddress, gKernelAndModulesMemoryType, EFI_SIZE_TO_PAGES(Context.ImageSize), &NewBase));
