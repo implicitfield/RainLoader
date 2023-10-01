@@ -30,6 +30,7 @@ static UINT8* mBootParamsBuffer = NULL;
 static UINTN mBootParamsSize = 0;
 
 extern void JumpToMB2Kernel(void* KernelStart, void* KernelParams);
+extern void JumpToAMD64MB2Kernel(void* KernelStart, void* KernelParams);
 
 #define ALIGN_DOWN(p, s) ((UINTN)((p) & -(s)));
 
@@ -153,6 +154,7 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
     TRACE("Found header at offset %d", HeaderOffset);
 
     UINTN EntryAddressOverride = 0;
+    UINTN EFIEntryAddressOverride = 0; // Ignored without PassBootServices.
     multiboot_uint32_t Alignment = 0;
     multiboot_uint32_t MinAddress = 0;
     multiboot_uint32_t MaxAddress = 0;
@@ -160,6 +162,7 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
     BOOLEAN MustHaveNewAcpi = FALSE;
     BOOLEAN NotElf = FALSE;
     BOOLEAN IsRelocatable = FALSE;
+    BOOLEAN PassBootServices = FALSE; // Ignored without EFIEntryAddressOverride.
 
     mBootParamsSize = 8;
     mBootParamsBuffer = AllocatePool(8);
@@ -185,6 +188,7 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
                         case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
                         case MULTIBOOT_TAG_TYPE_ELF_SECTIONS:
                         case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
+                        case MULTIBOOT_TAG_TYPE_EFI_BS:
                             break;
 
                         // These may not always be available
@@ -234,9 +238,7 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
             } break;
 
             case MULTIBOOT_HEADER_TAG_EFI_BS: {
-                if (!(tag->flags & MULTIBOOT_HEADER_TAG_OPTIONAL)) {
-                    CHECK_FAIL_TRACE("We do not support passing boot services");
-                }
+                PassBootServices = TRUE;
             } break;
 
             case MULTIBOOT_HEADER_TAG_ENTRY_ADDRESS_EFI32: {
@@ -246,9 +248,8 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
             } break;
 
             case MULTIBOOT_HEADER_TAG_ENTRY_ADDRESS_EFI64: {
-                if (!(tag->flags & MULTIBOOT_HEADER_TAG_OPTIONAL)) {
-                    CHECK_FAIL_TRACE("We do not support EFI boot for x86_64");
-                }
+                struct multiboot_header_tag_entry_address* entry_address = (void*)tag;
+                EFIEntryAddressOverride = entry_address->entry_addr;
             } break;
 
             case MULTIBOOT_HEADER_TAG_RELOCATABLE: {
@@ -378,8 +379,27 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
         Context.ImageAddress = Context.FileBase;
     }
 
+    // ParseElfImage sets Context.PreferredImageAddress to the base address of the image.
+    // Since we are about to relocate the image to Context.ImageAddress, we can do this to obtain the delta.
+    const UINTN Delta = Context.ImageAddress - Context.PreferredImageAddress;
+
     CHECK_AND_RETHROW(LoadElfImage(&Context));
     TRACE("Loaded ELF image into memory");
+
+    if (PassBootServices && EFIEntryAddressOverride != 0) {
+        TRACE("Pushing boot services");
+        UINTN size = sizeof(struct multiboot_tag);
+        struct multiboot_tag* bs = PushBootParams(NULL, size);
+        bs->type = MULTIBOOT_TAG_TYPE_EFI_BS;
+        bs->size = size;
+        // Apply the delta while we know EFIEntryAddressOverride is valid.
+        EFIEntryAddressOverride += Delta;
+    } else if (EntryAddressOverride != 0) {
+        // Else we don't care about EFIEntryAddressOverride
+        EntryAddressOverride += Delta;
+    } else {
+        EntryAddressOverride = Context.EntryPoint;
+    }
 
 #define PushELF(ELFTYPE)                                                                                     \
     ELFTYPE* Ehdr = (ELFTYPE*)Context.ImageAddress;                                                          \
@@ -401,10 +421,6 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
     }
 
 #undef PushELF
-
-    if (EntryAddressOverride == 0) {
-        EntryAddressOverride = Context.EntryPoint;
-    }
 
     TRACE("Pushing load base address");
     struct multiboot_tag_load_base_addr* load_base_addr = PushBootParams(NULL, sizeof(struct multiboot_tag_load_base_addr));
@@ -437,7 +453,9 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
     EFI_CHECK(gBS->GetMemoryMap(&MemoryMapSize, MemoryMap, &MapKey, &DescriptorSize, &DescriptorVersion));
     UINTN EntryCount = (MemoryMapSize / DescriptorSize);
 
-    EFI_CHECK(gBS->ExitBootServices(gImageHandle, MapKey));
+    if (!PassBootServices || EFIEntryAddressOverride == 0) {
+        EFI_CHECK(gBS->ExitBootServices(gImageHandle, MapKey));
+    }
 
     struct multiboot_tag_mmap* mmap = (void*)start_from;
     mmap->type = MULTIBOOT_TAG_TYPE_MMAP;
@@ -469,12 +487,16 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
     end_tag->type = MULTIBOOT_TAG_TYPE_END;
     end_tag->size = sizeof(struct multiboot_tag);
 
-    DisableInterrupts();
+    if (PassBootServices && EFIEntryAddressOverride != 0) {
+        JumpToAMD64MB2Kernel((void*)(EFIEntryAddressOverride), mBootParamsBuffer);
+    } else {
+        DisableInterrupts();
 
-    // Setup GDT and IDT
-    SetLinuxDescriptorTables();
+        // Setup GDT and IDT
+        SetLinuxDescriptorTables();
 
-    JumpToMB2Kernel((void*)EntryAddressOverride, mBootParamsBuffer);
+        JumpToMB2Kernel((void*)EntryAddressOverride, mBootParamsBuffer);
+    }
 
     // Sleep if we ever return
     while (1)
