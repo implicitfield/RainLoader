@@ -190,6 +190,7 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
                         case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
                         case MULTIBOOT_TAG_TYPE_EFI_BS:
                         case MULTIBOOT_TAG_TYPE_EFI64:
+                        case MULTIBOOT_TAG_TYPE_EFI64_IH:
                             break;
 
                         // These may not always be available
@@ -409,6 +410,15 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
         system_table->type = MULTIBOOT_TAG_TYPE_EFI64;
         system_table->size = size;
         system_table->pointer = (multiboot_uint64_t)gST;
+    }
+
+    {
+        TRACE("Pushing EFI image handle");
+        UINTN size = sizeof(struct multiboot_tag_efi64_ih);
+        struct multiboot_tag_efi64_ih* image_handle = PushBootParams(NULL, size);
+        image_handle->type = MULTIBOOT_TAG_TYPE_EFI64_IH;
+        image_handle->size = size;
+        image_handle->pointer = (multiboot_uint64_t)gImageHandle;
     }
 
 #define PushELF(ELFTYPE)                                                                                     \
