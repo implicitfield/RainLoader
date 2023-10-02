@@ -189,6 +189,7 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
                         case MULTIBOOT_TAG_TYPE_ELF_SECTIONS:
                         case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
                         case MULTIBOOT_TAG_TYPE_EFI_BS:
+                        case MULTIBOOT_TAG_TYPE_EFI64:
                             break;
 
                         // These may not always be available
@@ -399,6 +400,15 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
         EntryAddressOverride += Delta;
     } else {
         EntryAddressOverride = Context.EntryPoint;
+    }
+
+    {
+        TRACE("Pushing EFI system table");
+        UINTN size = sizeof(struct multiboot_tag_efi64);
+        struct multiboot_tag_efi64* system_table = PushBootParams(NULL, size);
+        system_table->type = MULTIBOOT_TAG_TYPE_EFI64;
+        system_table->size = size;
+        system_table->pointer = (multiboot_uint64_t)gST;
     }
 
 #define PushELF(ELFTYPE)                                                                                     \
