@@ -4,6 +4,7 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <util/Except.h>
 #include <util/FileUtils.h>
+#include <util/MemUtils.h>
 
 EFI_STATUS LoadElf(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* Fs, CHAR16* Path, UINTN* Base, UINTN* Size, UINTN MaxAddress) {
     EFI_STATUS Status = EFI_SUCCESS;

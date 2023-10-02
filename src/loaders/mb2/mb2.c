@@ -18,6 +18,7 @@
 #include <util/Except.h>
 #include <util/FileUtils.h>
 #include <util/GfxUtils.h>
+#include <util/MemUtils.h>
 
 #include <ElfLib.h>
 #include <ElfLib/ElfCommon.h>
@@ -31,8 +32,6 @@ static UINTN mBootParamsSize = 0;
 
 extern void JumpToMB2Kernel(void* KernelStart, void* KernelParams);
 extern void JumpToAMD64MB2Kernel(void* KernelStart, void* KernelParams);
-
-#define ALIGN_DOWN(p, s) ((UINTN)((p) & -(s)));
 
 // TODO: Make this force allocations below 4GB
 static void* PushBootParams(void* data, UINTN size) {
@@ -370,16 +369,9 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
     CHECK_AND_RETHROW(LoadElf(Entry->Fs, Entry->Path, (UINTN*)&Elf, &KernelSize, MaxAddress));
     CHECK_AND_RETHROW(ParseElfImage(Elf, &Context));
 
-    EFI_PHYSICAL_ADDRESS NewBase = ALIGN_DOWN(MaxAddress - EFI_PAGES_TO_SIZE(EFI_SIZE_TO_PAGES(Context.ImageSize)), Alignment);
-    if (Context.ReloadRequired) {
-        TRACE("ElfLib requested reload");
-        EFI_CHECK(gBS->AllocatePages(AllocateMaxAddress, gKernelAndModulesMemoryType, EFI_SIZE_TO_PAGES(Context.ImageSize), &NewBase));
-        if (NewBase < MinAddress)
-            CHECK_FAIL_TRACE("Unable to allocate memory region between 0x%x and 0x%x", MinAddress, MaxAddress);
-        Context.ImageAddress = (VOID*)NewBase;
-    } else {
-        Context.ImageAddress = Context.FileBase;
-    }
+    EFI_PHYSICAL_ADDRESS Base = 0;
+    EFI_CHECK(AllocateAlignedPagesInRange(gKernelAndModulesMemoryType, EFI_SIZE_TO_PAGES(Context.ImageSize), MinAddress, MaxAddress, Alignment, &Base));
+    Context.ImageAddress = (VOID*)Base;
 
     // ParseElfImage sets Context.PreferredImageAddress to the base address of the image.
     // Since we are about to relocate the image to Context.ImageAddress, we can do this to obtain the delta.

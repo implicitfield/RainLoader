@@ -3,6 +3,7 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <util/FileUtils.h>
+#include <util/MemUtils.h>
 
 EFI_STATUS LoadBootModule(BOOT_MODULE* Module, UINTN* Base, UINTN* Size) {
     EFI_STATUS Status = EFI_SUCCESS;

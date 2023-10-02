@@ -7,8 +7,6 @@
 #include <Uefi.h>
 #include <Protocol/SimpleFileSystem.h>
 
-extern EFI_MEMORY_TYPE gKernelAndModulesMemoryType;
-
 EFI_STATUS LoadBootModule(BOOT_MODULE* Module, UINTN* Base, UINTN* Size);
 
 EFI_STATUS LoadLinuxKernel(BOOT_KERNEL_ENTRY* Entry);
