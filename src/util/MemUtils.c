@@ -18,6 +18,7 @@ EFI_STATUS AllocateAlignedPagesInRange(EFI_MEMORY_TYPE MemoryType, UINTN PageCou
 
     CHECK(gBS->GetMemoryMap(&MemoryMapSize, (EFI_MEMORY_DESCRIPTOR*)TmpMemoryMap, &MapKey, &DescriptorSize, &DescriptorVersion) == EFI_BUFFER_TOO_SMALL);
 
+    MemoryMapSize += EFI_PAGE_SIZE;
     MemoryMap = AllocatePool(MemoryMapSize);
 
     EFI_CHECK(gBS->GetMemoryMap(&MemoryMapSize, MemoryMap, &MapKey, &DescriptorSize, &DescriptorVersion));
