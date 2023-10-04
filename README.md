@@ -11,7 +11,7 @@ This project is a fork of [TomatBoot](https://github.com/TomatOrg/TomatBoot), an
 Boots any relatively modern version of Linux with the help of EDK2's LoadLinuxLib.
 
 ### Multiboot2 (`mb2`)
-The Multiboot2 loader allows loading any relocatable Multiboot2-compilant kernel.
+The Multiboot2 loader allows loading any Multiboot2-compilant ELF kernel.
 
 ## Supported features
 * Passing a kernel command line
@@ -49,9 +49,6 @@ Example directory structure for the UEFI partition:
 
 ELF loading:
 * ELF loading is done with the help of EDK2's ElfLib.
-* Since UEFI does not guarrantee any given memory region to be available, we only support relocatable kernels.
-* If your kernel doesn't load, or faces unexpected issues (such as missing string tables), try recompiling it with `-fPIC`.
-* Multiboot2 kernels must contain a [relocatable header tag](https://www.gnu.org/software/grub/manual/multiboot2/multiboot.html#Relocatable-header-tag).
 
 EDK2:
 * We use EDK2 headers/libraries without the EDK2 buildsystem for simplicity.
