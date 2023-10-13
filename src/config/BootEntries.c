@@ -220,6 +220,9 @@ static EFI_STATUS LoadBootEntries(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* FS, LIST_ENTR
     BOOT_ENTRY* CurrentWrapperEntry = NULL;
     BOOT_MODULE* CurrentModuleString = NULL;
 
+    BOOT_CONFIG config = {};
+    LoadBootConfig(&config);
+
     while (TRUE) {
         CHAR16 Line[255] = {0};
         UINTN LineSize = sizeof(Line);
@@ -251,15 +254,15 @@ static EFI_STATUS LoadBootEntries(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* FS, LIST_ENTR
         } else if (CurrentWrapperEntry == NULL) {
             if (CHECK_OPTION(L"TIMEOUT")) {
                 if (StrCmp(StrStr(Line, L"=") + 1, L"Disabled") == 0) {
-                    gBootConfigOverride.DisableTimer = TRUE;
+                    config.DisableTimer = TRUE;
                 } else {
-                    gBootConfigOverride.DisableTimer = FALSE;
-                    gBootConfigOverride.BootDelay = (INT32)StrDecimalToUintn(StrStr(Line, L"=") + 1);
-                    if (gBootConfigOverride.BootDelay < 0)
-                        gBootConfigOverride.BootDelay = 0;
+                    config.DisableTimer = FALSE;
+                    config.BootDelay = (INT32)StrDecimalToUintn(StrStr(Line, L"=") + 1);
+                    if (config.BootDelay < 0)
+                        config.BootDelay = 0;
                 }
             } else if (CHECK_OPTION(L"DEFAULT_ENTRY")) {
-                gBootConfigOverride.DefaultOS = (INT32)StrDecimalToUintn(StrStr(Line, L"=") + 1);
+                config.DefaultOS = (INT32)StrDecimalToUintn(StrStr(Line, L"=") + 1);
             }
         } else {
             // Local keys
@@ -308,6 +311,8 @@ static EFI_STATUS LoadBootEntries(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* FS, LIST_ENTR
             }
         }
     }
+
+    SaveBootConfig(&config);
 
 cleanup:
     if (file != NULL) {

@@ -11,8 +11,6 @@ typedef struct {
     BOOLEAN DisableTimer;
 } BOOT_CONFIG;
 
-extern BOOT_CONFIG gBootConfigOverride;
-
 void LoadBootConfig(BOOT_CONFIG* config);
 
 void SaveBootConfig(BOOT_CONFIG* config);

@@ -86,7 +86,7 @@ MENU EnterMainMenu(BOOLEAN first) {
     BOOT_CONFIG config;
     LoadBootConfig(&config);
 
-    if ((config.BootDelay <= 0 || gBootConfigOverride.BootDelay == 0) && gDefaultEntry != NULL) {
+    if (config.BootDelay <= 0 && gDefaultEntry != NULL) {
         ASSERT_EFI_ERROR(gST->ConOut->SetAttribute(gST->ConOut, EFI_TEXT_ATTR(EFI_LIGHTGRAY, EFI_BLACK)));
         LoadKernel(gDefaultEntry);
         while (1)
@@ -97,7 +97,7 @@ MENU EnterMainMenu(BOOLEAN first) {
     ASSERT_EFI_ERROR(gST->ConOut->SetAttribute(gST->ConOut, EFI_TEXT_ATTR(EFI_RED, EFI_BLACK)));
 
     const UINTN TIMER_INTERVAL = 250000; // 1/40 sec
-    const UINTN INITIAL_TIMEOUT_COUNTER = ((gBootConfigOverride.BootDelay >= 0 ? gBootConfigOverride.BootDelay : config.BootDelay) * 10000000) / TIMER_INTERVAL;
+    const UINTN INITIAL_TIMEOUT_COUNTER = (config.BootDelay * 10000000) / TIMER_INTERVAL;
     const UINTN BAR_WIDTH = 80;
 
     INTN timeout_counter = INITIAL_TIMEOUT_COUNTER;
@@ -143,7 +143,7 @@ MENU EnterMainMenu(BOOLEAN first) {
                 return MENU_SHUTDOWN;
             }
 
-        } else if (!gBootConfigOverride.DisableTimer) {
+        } else if (!config.DisableTimer) {
             // Timeout reached
             timeout_counter--;
             if (timeout_counter <= 0) {
@@ -151,7 +151,7 @@ MENU EnterMainMenu(BOOLEAN first) {
 
                 ASSERT_EFI_ERROR(gBS->CloseEvent(events[1]));
 
-                LoadKernel(gBootConfigOverride.DefaultOS > 0 ? GetKernelEntryAt(gBootConfigOverride.DefaultOS) : gDefaultEntry);
+                LoadKernel(config.DefaultOS > 0 ? GetKernelEntryAt(config.DefaultOS) : gDefaultEntry);
             } else {
                 // Set the bar color
                 ASSERT_EFI_ERROR(gST->ConOut->SetAttribute(gST->ConOut, EFI_TEXT_ATTR(EFI_BLACK, EFI_LIGHTGRAY)));
