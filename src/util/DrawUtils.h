@@ -6,7 +6,9 @@
 
 extern EFI_GRAPHICS_OUTPUT_PROTOCOL* gop;
 extern UINT32 ActiveBackgroundColor;
+extern UINT32 ActiveForegroundColor;
 extern UINT32 BackgroundColor;
+extern UINT32 ForegroundColor;
 
 UINT32 GetColumns();
 UINT32 GetRows();

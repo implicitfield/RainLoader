@@ -16,7 +16,9 @@
 EFI_GRAPHICS_OUTPUT_PROTOCOL* gop = NULL;
 static CHAR8 PrintBuffer[PRINT_BUFFER_SIZE];
 UINT32 ActiveBackgroundColor = WHITE;
+UINT32 ActiveForegroundColor = BLACK;
 UINT32 BackgroundColor = WHITE;
+UINT32 ForegroundColor = BLACK;
 
 static inline void PlotPixel_32bpp(int x, int y, UINT32 pixel) {
     *((UINT32*)(gop->Mode->FrameBufferBase + 4 * gop->Mode->Info->PixelsPerScanLine * y + 4 * x)) = pixel;
@@ -40,7 +42,7 @@ void PutChar(unsigned x_offset, unsigned y_offset, unsigned char c) {
         for (unsigned loop_x = 0; loop_x < 8; ++loop_x) {
             UINT32 color = ActiveBackgroundColor;
             if (GetNthBit(bytes, 8 - loop_x))
-                color = 0;
+                color = ActiveForegroundColor;
             PlotPixel_32bpp(loop_x + x_offset * 8, loop_y + y_offset * 16, color);
         }
     }

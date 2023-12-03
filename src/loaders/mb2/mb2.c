@@ -15,6 +15,7 @@
 #include <config/BootConfig.h>
 #include <config/BootEntries.h>
 #include <loaders/Loaders.h>
+#include <util/Colors.h>
 #include <util/DrawUtils.h>
 #include <util/Except.h>
 #include <util/FileUtils.h>
@@ -80,11 +81,10 @@ static struct multiboot_header* LoadMB2Header(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* f
     EFI_FILE_PROTOCOL* mb2image = NULL;
     struct multiboot_header* ptr = NULL;
 
-    Print(L"Loading image `%s`\n", file);
     EFI_CHECK(fs->OpenVolume(fs, &root));
     EFI_CHECK(root->Open(root, &mb2image, file, EFI_FILE_MODE_READ, 0));
 
-    Print(L"Searching for mb2 header\n");
+    TRACE("Searching for mb2 header");
     struct multiboot_header header;
     for (int i = 0; i < MULTIBOOT_SEARCH; i += MULTIBOOT_HEADER_ALIGN) {
         CHECK_AND_RETHROW(FileRead(mb2image, &header, sizeof(header), i));
@@ -143,9 +143,10 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
     BOOT_CONFIG config;
     LoadBootConfig(&config);
 
-    EFI_GRAPHICS_OUTPUT_PROTOCOL* gop = NULL;
-    ASSERT_EFI_ERROR(gBS->LocateProtocol(&gEfiGraphicsOutputProtocolGuid, NULL, (VOID**)&gop));
     ASSERT_EFI_ERROR(gop->SetMode(gop, (UINT32)config.GfxMode));
+
+    ActiveBackgroundColor = BLACK;
+    ActiveForegroundColor = WHITE;
 
     struct multiboot_header* header = LoadMB2Header(Entry->Fs, Entry->Path, &HeaderOffset);
     CHECK_ERROR_TRACE(header != NULL, EFI_NOT_FOUND, "Could not find a valid multiboot2 header!");

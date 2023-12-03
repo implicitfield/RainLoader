@@ -8,9 +8,11 @@
 #    define __FILENAME__ __FILE__
 #endif
 
-#define TRACE(fmt, ...) Print(L"[*] " fmt "\n", ##__VA_ARGS__);
-#define WARN(fmt, ...) Print(L"[!] " fmt "\n", ##__VA_ARGS__);
-#define ERROR(fmt, ...) Print(L"[-] " fmt "\n", ##__VA_ARGS__);
+void LinePrint(const CHAR8* fmt, ...);
+
+#define TRACE(fmt, ...) LinePrint("[*] " fmt, ##__VA_ARGS__);
+#define WARN(fmt, ...) LinePrint("[!] " fmt, ##__VA_ARGS__);
+#define ERROR(fmt, ...) LinePrint("[-] " fmt, ##__VA_ARGS__);
 
 #define CHECK_ERROR_LABEL_TRACE(expr, error, label, fmt, ...)                    \
     do {                                                                         \
