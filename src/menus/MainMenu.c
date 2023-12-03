@@ -41,7 +41,7 @@ static void draw() {
     if (gDefaultEntry != NULL) {
         WriteAt(3, 7, "Current OS: %s (%s)", gDefaultEntry->Name, gDefaultEntry->Path);
     } else {
-        WriteAt(3, 8, "No config file found!");
+        WriteAt(3, 7, "No config file found!");
     }
     WriteAt(3, 9, "Firmware: %s (%08x)", gST->FirmwareVendor, gST->FirmwareRevision);
     WriteAt(3, 10, "UEFI Version: %d.%d", (gST->Hdr.Revision >> 16u) & 0xFFFFu, gST->Hdr.Revision & 0xFFFFu);
@@ -97,7 +97,7 @@ MENU EnterMainMenu(BOOLEAN first) {
 
                 // Clear the progress bar
                 for (UINTN i = 0; i < BAR_WIDTH; ++i) {
-                    WriteAt(i, 22, " ");
+                    WriteAt(i, 18, " ");
                 }
             }
 
@@ -122,7 +122,7 @@ MENU EnterMainMenu(BOOLEAN first) {
                 int end = ((INITIAL_TIMEOUT_COUNTER - timeout_counter) * BAR_WIDTH) / INITIAL_TIMEOUT_COUNTER;
                 ActiveBackgroundColor = LIGHTGREY;
                 for (int i = start; i <= end; ++i) {
-                    WriteAt(i, 22, " ");
+                    WriteAt(i, 18, " ");
                 }
                 ActiveBackgroundColor = BackgroundColor;
 
