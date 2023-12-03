@@ -11,8 +11,8 @@ default: all
 ########################################################################################################################
 
 # Sources for the core
-SRCS += $(shell find src/ -name '*.c')
-SRCS += $(shell find src/ -name '*.S')
+SRCS += $(shell find src -name '*.c')
+SRCS += $(shell find src -name '*.S')
 
 # Runtime support
 SRCS += $(shell find lib/runtime -name '*.c')
