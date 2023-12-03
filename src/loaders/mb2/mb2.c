@@ -391,7 +391,7 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
     }
 
 #define PushELF(ELFTYPE)                                                                                     \
-    ELFTYPE* Ehdr = (ELFTYPE*)Context.ImageAddress;                                                          \
+    ELFTYPE* Ehdr = (ELFTYPE*)Elf;                                                                           \
     UINTN Size = OFFSET_OF(struct multiboot_tag_elf_sections, sections) + Ehdr->e_shnum * Ehdr->e_shentsize; \
     struct multiboot_tag_elf_sections* sections = PushBootParams(NULL, Size);                                \
     sections->size = Size;                                                                                   \
@@ -399,7 +399,7 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
     sections->entsize = Ehdr->e_shentsize;                                                                   \
     sections->num = Ehdr->e_shnum;                                                                           \
     sections->shndx = Ehdr->e_shstrndx;                                                                      \
-    CopyMem(sections->sections, Context.ImageAddress + Ehdr->e_shoff, Ehdr->e_shnum * Ehdr->e_shentsize);
+    CopyMem(sections->sections, (CHAR8*)Elf + Ehdr->e_shoff, Ehdr->e_shnum * Ehdr->e_shentsize);
 
     TRACE("Pushing ELF info");
     if (Context.EiClass == ELFCLASS32) {
