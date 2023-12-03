@@ -1,7 +1,7 @@
-#ifndef __CONFIG_CONFIG_H__
-#define __CONFIG_CONFIG_H__
+#pragma once
 
 #include <Uefi.h>
+
 #include <Protocol/SimpleFileSystem.h>
 
 typedef enum {
@@ -56,5 +56,3 @@ BOOLEAN ContainsKernel(VOID);
 // Provides a linked list all the boot entries found in the configuration
 // files across all detected filesystems
 EFI_STATUS GetBootEntries(LIST_ENTRY* Head);
-
-#endif //__CONFIG_CONFIG_H__

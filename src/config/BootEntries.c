@@ -5,6 +5,7 @@
 #include <util/FileUtils.h>
 
 #include <Uefi.h>
+
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DevicePathLib.h>
@@ -349,8 +350,8 @@ BOOLEAN ContainsKernel(VOID) {
 }
 
 VOID FreeModules(LIST_ENTRY* Head) {
-    LIST_ENTRY *Entry;
-    LIST_ENTRY *Next;
+    LIST_ENTRY* Entry;
+    LIST_ENTRY* Next;
     BASE_LIST_FOR_EACH_SAFE(Entry, Next, Head) {
         BOOT_MODULE* BootModule = BASE_CR(Entry, BOOT_MODULE, Link);
         FreePool(BootModule);
@@ -376,8 +377,8 @@ EFI_STATUS GetBootEntries(LIST_ENTRY* Head) {
     CHECK_AND_RETHROW(LoadBootEntries(BootFs, Head));
 
     // Validate all entries and drop invalid ones
-    LIST_ENTRY *Entry;
-    LIST_ENTRY *Next;
+    LIST_ENTRY* Entry;
+    LIST_ENTRY* Next;
     BASE_LIST_FOR_EACH_SAFE(Entry, Next, Head) {
         BOOT_ENTRY* EntryWrapper = BASE_CR(Entry, BOOT_ENTRY, Link);
         if (!ValidateKernelEntry(EntryWrapper->Entry)) {

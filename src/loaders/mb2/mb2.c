@@ -2,6 +2,7 @@
 #include "multiboot2.h"
 
 #include <Uefi.h>
+
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/FileHandleLib.h>
@@ -22,6 +23,7 @@
 
 #include <ElfLib.h>
 #include <ElfLib/ElfCommon.h>
+
 #include <ElfLib/Elf32.h>
 #include <ElfLib/Elf64.h>
 

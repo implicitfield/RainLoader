@@ -1,8 +1,5 @@
-#ifndef __UTIL_ACPIUTILS_H
-#define __UTIL_ACPIUTILS_H
+#pragma once
 
-#include <ProcessorBind.h>
+#include <Uefi.h>
 
 void* GetAcpiTable(UINT32 Signature);
-
-#endif // __UTIL_ACPIUTILS_H

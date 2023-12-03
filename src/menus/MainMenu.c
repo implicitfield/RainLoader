@@ -6,6 +6,7 @@
 #include <config/BootEntries.h>
 
 #include <Uefi.h>
+
 #include <Library/CpuLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DevicePathLib.h>

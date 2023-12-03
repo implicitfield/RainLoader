@@ -1,6 +1,8 @@
-#include <Uefi.h>
 #include "AcpiUtils.h"
 #include "Except.h"
+
+#include <Uefi.h>
+
 #include <Guid/Acpi.h>
 
 void* GetAcpiTable(UINT32 Signature) {

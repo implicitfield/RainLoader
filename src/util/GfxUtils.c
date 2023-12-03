@@ -2,6 +2,7 @@
 #include "Except.h"
 
 #include <Uefi.h>
+
 #include <Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Protocol/GraphicsOutput.h>
@@ -68,11 +69,10 @@ INT32 GetBestGfxMode(UINT32 Width, UINT32 Height) {
     EFI_GRAPHICS_OUTPUT_MODE_INFORMATION* info = NULL;
     UINTN sizeOfInfo = sizeof(EFI_GRAPHICS_OUTPUT_MODE_INFORMATION);
 
-    INTN i;
-    INT32 goodOption;
+    INT32 goodOption = 0;
     UINT32 BestWidth = 0;
     UINT32 BestHeight = 0;
-    for (i = 0; i < gop->Mode->MaxMode; ++i) {
+    for (INTN i = 0; i < gop->Mode->MaxMode; ++i) {
         // Make sure that this is a supported format
         ASSERT_EFI_ERROR(gop->QueryMode(gop, i, &sizeOfInfo, &info));
         if (info->PixelFormat != PixelBlueGreenRedReserved8BitPerColor) {

@@ -1,7 +1,7 @@
-#ifndef __UTIL_EXCEPT_H__
-#define __UTIL_EXCEPT_H__
+#pragma once
 
 #include <Uefi.h>
+
 #include <Library/UefiLib.h>
 
 #ifndef __FILENAME__
@@ -62,5 +62,3 @@
             WARN("Warning: " fmt " at (%a:%d)", ##__VA_ARGS__, __func__, __FILENAME__, __LINE__); \
         }                                                                                         \
     } while (0)
-
-#endif //__UTIL_EXCEPT_H__

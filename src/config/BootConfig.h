@@ -1,5 +1,4 @@
-#ifndef __CONFIG_BOOT_CONFIG_H__
-#define __CONFIG_BOOT_CONFIG_H__
+#pragma once
 
 #include <Uefi.h>
 
@@ -14,5 +13,3 @@ typedef struct {
 void LoadBootConfig(BOOT_CONFIG* config);
 
 void SaveBootConfig(BOOT_CONFIG* config);
-
-#endif //__CONFIG_BOOT_CONFIG_H__

@@ -1,7 +1,4 @@
-#ifndef __MENUS_MENUS_H__
-#define __MENUS_MENUS_H__
-
-#include <ProcessorBind.h>
+#pragma once
 
 typedef enum {
     MENU_BOOT_MENU,
@@ -12,5 +9,3 @@ typedef enum {
 } MENU;
 
 void StartMenus();
-
-#endif //__MENUS_MENUS_H__
