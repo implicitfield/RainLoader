@@ -36,7 +36,7 @@ static void draw() {
 
     EFI_TIME time;
     ASSERT_EFI_ERROR(gRT->GetTime(&time, NULL));
-    WriteAt(3, 5, "Current time: %d/%d/%d %d:%d", time.Day, time.Month, time.Year, time.Hour, time.Minute);
+    WriteAt(3, 5, "Current time: %02d/%02d/%d %02d:%02d", time.Day, time.Month, time.Year, time.Hour, time.Minute);
     WriteAt(3, 6, "Graphics mode: %dx%d", info->HorizontalResolution, info->VerticalResolution);
     if (gDefaultEntry != NULL) {
         WriteAt(3, 7, "Current OS: %s (%s)", gDefaultEntry->Name, gDefaultEntry->Path);
