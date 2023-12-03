@@ -51,9 +51,7 @@ EFI_STATUS EFIAPI EfiMain(IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE* System
     StartMenus();
 
 cleanup:
-    if (EFI_ERROR(Status)) {
-        ASSERT_EFI_ERROR(Status);
-    }
+    ASSERT_EFI_ERROR(Status);
 
     while (1)
         CpuSleep();
