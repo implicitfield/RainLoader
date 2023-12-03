@@ -140,9 +140,6 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
     EFI_STATUS Status = EFI_SUCCESS;
     UINTN HeaderOffset = 0;
 
-    gST->ConOut->ClearScreen(gST->ConOut);
-    gST->ConOut->SetCursorPosition(gST->ConOut, 0, 0);
-
     BOOT_CONFIG config;
     LoadBootConfig(&config);
 

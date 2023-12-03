@@ -43,9 +43,6 @@ EFI_STATUS LoadKernel(BOOT_KERNEL_ENTRY* Entry) {
 
     CHECK(Entry != NULL);
 
-    gST->ConOut->ClearScreen(gST->ConOut);
-    gST->ConOut->SetCursorPosition(gST->ConOut, 0, 0);
-
     switch (Entry->Protocol) {
         case BOOT_LINUX:
             CHECK_AND_RETHROW(LoadLinuxKernel(Entry));

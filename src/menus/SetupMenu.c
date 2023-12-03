@@ -2,6 +2,7 @@
 
 #include <config/BootConfig.h>
 #include <config/BootEntries.h>
+#include <util/Colors.h>
 #include <util/DrawUtils.h>
 #include <util/GfxUtils.h>
 
@@ -13,19 +14,15 @@
 #include <Protocol/GraphicsOutput.h>
 
 static void draw() {
-    UINTN width = 0;
-    UINTN height = 0;
-    ASSERT_EFI_ERROR(gST->ConOut->QueryMode(gST->ConOut, gST->ConOut->Mode->Mode, &width, &height));
+    UINTN width = GetColumns();
+    UINTN height = GetRows();
 
-    // Draw the frame
-    ClearScreen(EFI_BACKGROUND_BLUE);
+    ClearScreen(WHITE);
 
-    gST->ConOut->SetAttribute(gST->ConOut, EFI_TEXT_ATTR(EFI_LIGHTGRAY, EFI_BLUE));
     WriteAt(width / 2 - AsciiStrLen("BOOT SETUP") / 2, 0, "BOOT SETUP");
 
     // Draw the controls
     UINTN controls_start = width - 18;
-    gST->ConOut->SetAttribute(gST->ConOut, EFI_TEXT_ATTR(EFI_LIGHTGRAY, EFI_BLUE));
 
     WriteAt(controls_start, 2, "Press [-] to");
     WriteAt(controls_start, 3, "decrease value");
@@ -38,16 +35,19 @@ static void draw() {
 
     WriteAt(controls_start, 11, "Press ESC to");
     WriteAt(controls_start, 12, "quit");
+
+    FillBox(2, 1, width - 22, height - 2, LIGHTGREY);
 }
 
-#define IF_SELECTED(...)                                                                     \
-    do {                                                                                     \
-        if (selected == control_line) {                                                      \
-            gST->ConOut->SetAttribute(gST->ConOut, EFI_TEXT_ATTR(EFI_WHITE, EFI_LIGHTGRAY)); \
-            __VA_ARGS__;                                                                     \
-        } else {                                                                             \
-            gST->ConOut->SetAttribute(gST->ConOut, EFI_TEXT_ATTR(EFI_BLUE, EFI_LIGHTGRAY));  \
-        }                                                                                    \
+#define IF_SELECTED(...)                                        \
+    do {                                                        \
+        if (selected == control_line) {                         \
+            ActiveBackgroundColor = BackgroundColor;            \
+            FillBox(2, control_line, width - 22, 1, LIGHTGREY); \
+            __VA_ARGS__;                                        \
+        } else {                                                \
+            ActiveBackgroundColor = LIGHTGREY;                  \
+        }                                                       \
     } while (0)
 
 // Selectable operations
@@ -56,13 +56,7 @@ static void draw() {
 #define OP_DEC (2)
 
 MENU EnterSetupMenu() {
-    UINTN width = 0;
-    UINTN height = 0;
-    ASSERT_EFI_ERROR(gST->ConOut->QueryMode(gST->ConOut, gST->ConOut->Mode->Mode, &width, &height));
-
-    EFI_GRAPHICS_OUTPUT_PROTOCOL* gop = NULL;
-    ASSERT_EFI_ERROR(gBS->LocateProtocol(&gEfiGraphicsOutputProtocolGuid, NULL, (VOID**)&gop));
-
+    UINTN width = GetColumns();
     draw();
 
     BOOT_CONFIG config = {};
@@ -74,7 +68,6 @@ MENU EnterSetupMenu() {
     UINTN selected = 2;
     do {
         UINTN control_line = control_line_start;
-        FillBox(2, 1, width - 22, height - 2, EFI_TEXT_ATTR(EFI_BLUE, EFI_LIGHTGRAY));
 
         ////////////////////////////////////////////////////////////////////////
         // Setup entries
@@ -168,32 +161,30 @@ MENU EnterSetupMenu() {
         if (status == EFI_NOT_READY) {
             continue;
         }
+
         ASSERT_EFI_ERROR(status);
 
         if (key.UnicodeChar == L'-') {
             op = OP_DEC;
-
         } else if (key.UnicodeChar == L'+') {
             op = OP_INC;
-
         } else if (key.ScanCode == SCAN_DOWN) {
             selected++;
             if (selected >= control_line) {
                 selected = control_line_start;
             }
-
         } else if (key.ScanCode == SCAN_UP) {
             selected--;
             if (selected < control_line_start) {
                 selected = control_line - 1;
             }
-
         } else if (key.UnicodeChar == CHAR_CARRIAGE_RETURN) {
             SaveBootConfig(&config);
+            ActiveBackgroundColor = BackgroundColor;
             return MENU_MAIN_MENU;
-
         } else if (key.ScanCode == SCAN_ESC) {
             // Quit without saving
+            ActiveBackgroundColor = BackgroundColor;
             return MENU_MAIN_MENU;
         }
     } while (TRUE);

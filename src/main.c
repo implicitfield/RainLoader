@@ -37,8 +37,6 @@ EFI_STATUS EFIAPI EfiMain(IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE* System
     // Disable the watchdog timer
     EFI_CHECK(gST->BootServices->SetWatchdogTimer(0, 0, 0, NULL));
 
-    EFI_CHECK(gST->ConOut->ClearScreen(gST->ConOut));
-
     // Workaround for old AMI firmware
     if (StrCmp(gST->FirmwareVendor, L"American Megatrends") == 0 && gST->FirmwareRevision <= 0x0005000C) {
         gKernelAndModulesMemoryType = EfiMemoryMappedIOPortSpace;

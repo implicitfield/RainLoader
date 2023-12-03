@@ -4,9 +4,11 @@
 
 #include <config/BootConfig.h>
 #include <config/BootEntries.h>
+#include <util/Colors.h>
 
 #include <Uefi.h>
 
+#include <Library/BaseMemoryLib.h>
 #include <Library/CpuLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DevicePathLib.h>
@@ -14,73 +16,39 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Protocol/DevicePathToText.h>
-#include <Protocol/GraphicsOutput.h>
 #include <Protocol/LoadedImage.h>
 #include <loaders/Loaders.h>
 
-// (14x14) (28x14)
-#define b EFI_LIGHTBLUE
-#define B EFI_BLUE
-#define W EFI_WHITE
-// clang-format off
-__attribute__((unused)) static CHAR8 DropletImage[] = {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, b, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, b, b, B, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, b, b, b, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, b, b, b, b, B, 0, 0, 0, 0,
-        0, 0, 0, 0, b, W, b, b, B, 0, 0, 0, 0,
-        0, 0, 0, b, W, b, b, b, b, B, 0, 0, 0,
-        0, 0, 0, b, W, b, b, b, B, B, 0, 0, 0,
-        0, 0, 0, b, b, W, b, B, B, B, 0, 0, 0,
-        0, 0, 0, 0, b, b, B, B, B, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, B, B, B, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-};
-// clang-format on
-#undef b
-#undef B
-#undef W
-
 static void draw() {
-    ClearScreen(EFI_TEXT_ATTR(EFI_LIGHTGRAY, EFI_BLACK));
-
-    WriteAt(0, 1, "RainLoader v1");
-    WriteAt(0, 2, "Copyright (c) 2020, TomatOrg");
-    WriteAt(0, 3, "Copyright (c) 2023, implicitfield");
-
-    UINTN width = 0;
-    UINTN height = 0;
-    ASSERT_EFI_ERROR(gST->ConOut->QueryMode(gST->ConOut, gST->ConOut->Mode->Mode, &width, &height));
-
     BOOT_CONFIG config;
     LoadBootConfig(&config);
 
-    EFI_GRAPHICS_OUTPUT_PROTOCOL* gop = NULL;
     ASSERT_EFI_ERROR(gBS->LocateProtocol(&gEfiGraphicsOutputProtocolGuid, NULL, (VOID**)&gop));
     EFI_GRAPHICS_OUTPUT_MODE_INFORMATION* info = NULL;
     UINTN sizeOfInfo = sizeof(EFI_GRAPHICS_OUTPUT_MODE_INFORMATION);
     ASSERT_EFI_ERROR(gop->QueryMode(gop, config.GfxMode, &sizeOfInfo, &info));
 
+    ClearScreen(WHITE);
+
+    WriteAt(3, 1, "RainLoader v1");
+    WriteAt(3, 2, "Copyright (c) 2020, TomatOrg");
+    WriteAt(3, 3, "Copyright (c) 2023, implicitfield");
+
     EFI_TIME time;
     ASSERT_EFI_ERROR(gRT->GetTime(&time, NULL));
-    WriteAt(0, 5, "Current time: %d/%d/%d %d:%d", time.Day, time.Month, time.Year, time.Hour, time.Minute);
-    WriteAt(0, 6, "Graphics mode: %dx%d", info->HorizontalResolution, info->VerticalResolution);
+    WriteAt(3, 5, "Current time: %d/%d/%d %d:%d", time.Day, time.Month, time.Year, time.Hour, time.Minute);
+    WriteAt(3, 6, "Graphics mode: %dx%d", info->HorizontalResolution, info->VerticalResolution);
     if (gDefaultEntry != NULL) {
-        WriteAt(0, 7, "Current OS: %s (%s)", gDefaultEntry->Name, gDefaultEntry->Path);
+        WriteAt(3, 7, "Current OS: %s (%s)", gDefaultEntry->Name, gDefaultEntry->Path);
     } else {
-        WriteAt(0, 8, "No config file found!");
+        WriteAt(3, 8, "No config file found!");
     }
-    WriteAt(0, 9, "Firmware: %s (%08x)", gST->FirmwareVendor, gST->FirmwareRevision);
-    WriteAt(0, 10, "UEFI Version: %d.%d", (gST->Hdr.Revision >> 16u) & 0xFFFFu, gST->Hdr.Revision & 0xFFFFu);
+    WriteAt(3, 9, "Firmware: %s (%08x)", gST->FirmwareVendor, gST->FirmwareRevision);
+    WriteAt(3, 10, "UEFI Version: %d.%d", (gST->Hdr.Revision >> 16u) & 0xFFFFu, gST->Hdr.Revision & 0xFFFFu);
 
-    WriteAt(0, 13, "Press B for BOOTMENU");
-    WriteAt(0, 14, "Press S for SETUP");
-    WriteAt(0, 15, "Press TAB for SHUTDOWN");
-
-    DrawImage(30 + ((width - 30) / 2) - 14, 1, DropletImage, 13, 14);
+    WriteAt(3, 13, "Press B for BOOTMENU");
+    WriteAt(3, 14, "Press S for SETUP");
+    WriteAt(3, 15, "Press TAB for SHUTDOWN");
 }
 
 MENU EnterMainMenu(BOOLEAN first) {
@@ -88,18 +56,16 @@ MENU EnterMainMenu(BOOLEAN first) {
     LoadBootConfig(&config);
 
     if (config.BootDelay <= 0 && gDefaultEntry != NULL) {
-        ASSERT_EFI_ERROR(gST->ConOut->SetAttribute(gST->ConOut, EFI_TEXT_ATTR(EFI_LIGHTGRAY, EFI_BLACK)));
         LoadKernel(gDefaultEntry);
         while (1)
             CpuSleep();
     }
 
     draw();
-    ASSERT_EFI_ERROR(gST->ConOut->SetAttribute(gST->ConOut, EFI_TEXT_ATTR(EFI_RED, EFI_BLACK)));
 
     const UINTN TIMER_INTERVAL = 250000; // 1/40 sec
     const UINTN INITIAL_TIMEOUT_COUNTER = (config.BootDelay * 10000000) / TIMER_INTERVAL;
-    const UINTN BAR_WIDTH = 80;
+    const UINTN BAR_WIDTH = GetColumns();
 
     INTN timeout_counter = INITIAL_TIMEOUT_COUNTER;
     EFI_EVENT events[2] = {gST->ConIn->WaitForKey};
@@ -130,7 +96,6 @@ MENU EnterMainMenu(BOOLEAN first) {
                 count = 1;
 
                 // Clear the progress bar
-                ASSERT_EFI_ERROR(gST->ConOut->SetAttribute(gST->ConOut, EFI_TEXT_ATTR(EFI_LIGHTGRAY, EFI_BLACK)));
                 for (UINTN i = 0; i < BAR_WIDTH; ++i) {
                     WriteAt(i, 22, " ");
                 }
@@ -148,21 +113,18 @@ MENU EnterMainMenu(BOOLEAN first) {
             // Timeout reached
             timeout_counter--;
             if (timeout_counter <= 0) {
-                ASSERT_EFI_ERROR(gST->ConOut->SetAttribute(gST->ConOut, EFI_TEXT_ATTR(EFI_LIGHTGRAY, EFI_BLACK)));
-
                 ASSERT_EFI_ERROR(gBS->CloseEvent(events[1]));
 
                 LoadKernel(config.DefaultOS > 0 ? GetKernelEntryAt(config.DefaultOS) : gDefaultEntry);
             } else {
-                // Set the bar color
-                ASSERT_EFI_ERROR(gST->ConOut->SetAttribute(gST->ConOut, EFI_TEXT_ATTR(EFI_BLACK, EFI_LIGHTGRAY)));
-
                 // Write a new chunk of the bar
                 int start = ((INITIAL_TIMEOUT_COUNTER - timeout_counter - 1) * BAR_WIDTH) / INITIAL_TIMEOUT_COUNTER;
                 int end = ((INITIAL_TIMEOUT_COUNTER - timeout_counter) * BAR_WIDTH) / INITIAL_TIMEOUT_COUNTER;
+                ActiveBackgroundColor = LIGHTGREY;
                 for (int i = start; i <= end; ++i) {
                     WriteAt(i, 22, " ");
                 }
+                ActiveBackgroundColor = BackgroundColor;
 
                 // Restart the timer
                 ASSERT_EFI_ERROR(gBS->SetTimer(events[1], TimerRelative, TIMER_INTERVAL));

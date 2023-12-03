@@ -1,6 +1,7 @@
 #include "Menus.h"
 
 #include <config/BootEntries.h>
+#include <util/Colors.h>
 #include <util/DrawUtils.h>
 
 #include <Uefi.h>
@@ -11,16 +12,17 @@
 #include <loaders/Loaders.h>
 
 static void draw() {
-    UINTN width = 0;
-    UINTN height = 0;
-    ASSERT_EFI_ERROR(gST->ConOut->QueryMode(gST->ConOut, gST->ConOut->Mode->Mode, &width, &height));
+    UINTN width = GetColumns();
+    UINTN height = GetRows();
 
-    ClearScreen(EFI_TEXT_ATTR(EFI_LIGHTGRAY, EFI_BLACK));
+    ClearScreen(WHITE);
 
-    FillBox(0, 0, (int)width, 1, EFI_TEXT_ATTR(EFI_BLACK, EFI_LIGHTGRAY));
+    FillBox(0, 0, (int)width, 1, LIGHTGREY);
+    ActiveBackgroundColor = LIGHTGREY;
     WriteAt((int)(width / 2 - 6), 0, "RainLoader v1");
+    ActiveBackgroundColor = BackgroundColor;
 
-    FillBox(0, (int)(height - 2), (int)width, 1, EFI_TEXT_ATTR(EFI_BLACK, EFI_LIGHTGRAY));
+    FillBox(0, (int)(height - 2), (int)width, 1, LIGHTGREY);
 }
 
 static const char* loader_names[] = {
@@ -29,16 +31,14 @@ static const char* loader_names[] = {
 };
 
 MENU EnterBootMenu() {
-    UINTN width = 0;
-    UINTN height = 0;
-    ASSERT_EFI_ERROR(gST->ConOut->QueryMode(gST->ConOut, gST->ConOut->Mode->Mode, &width, &height));
+    UINTN width = GetColumns();
 
     draw();
 
     INTN selected = 0;
     BOOT_ENTRY* selectedEntry = NULL;
-    while (TRUE) {
 
+    while (TRUE) {
         // Draw the entries
         // TODO: Add a way to edit the command line
         INTN i = 0;
@@ -52,9 +52,10 @@ MENU EnterBootMenu() {
             // Draw the correct background
             if (i == selected) {
                 selectedEntry = entry;
-                FillBox(4, offset + i, (int)width - 8, 1, EFI_TEXT_ATTR(EFI_BLACK, EFI_LIGHTGRAY));
+                FillBox(4, offset + i, (int)width - 8, 1, LIGHTGREY);
+                ActiveBackgroundColor = LIGHTGREY;
             } else {
-                FillBox(4, offset + i, (int)width - 8, 1, EFI_TEXT_ATTR(EFI_LIGHTGRAY, EFI_BLACK));
+                FillBox(4, offset + i, (int)width - 8, 1, BackgroundColor);
             }
 
             // Write the option
@@ -68,6 +69,7 @@ MENU EnterBootMenu() {
                     WriteAt(6, offset + i, "%s", ActionEntry->Name);
                     break;
             }
+            ActiveBackgroundColor = BackgroundColor;
         }
 
         UINTN which = 0;
