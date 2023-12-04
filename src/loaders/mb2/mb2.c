@@ -143,7 +143,8 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
     BOOT_CONFIG config;
     LoadBootConfig(&config);
 
-    ASSERT_EFI_ERROR(gop->SetMode(gop, (UINT32)config.GfxMode));
+    Status = gop->SetMode(gop, (UINT32)config.GfxMode);
+    ASSERT_EFI_ERROR(Status);
 
     ActiveBackgroundColor = BLACK;
     ActiveForegroundColor = WHITE;
@@ -228,7 +229,8 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
                     GfxMode = GetBestGfxMode(framebuffer->width, framebuffer->height);
                 }
 
-                ASSERT_EFI_ERROR(gop->SetMode(gop, (UINT32)GfxMode));
+                Status = gop->SetMode(gop, (UINT32)GfxMode);
+                ASSERT_EFI_ERROR(Status);
             } break;
 
             case MULTIBOOT_HEADER_TAG_MODULE_ALIGN: {

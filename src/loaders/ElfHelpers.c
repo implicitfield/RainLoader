@@ -39,7 +39,7 @@ STATIC const UINT8* GetSymName(UINT8* ImageBase, Elf64_Sym* Sym) {
         return NULL;
     }
 
-    ASSERT_EFI_ERROR(Sym->st_name < StrtabShdr->sh_size);
+    ASSERT(Sym->st_name < StrtabShdr->sh_size);
 
     UINT8* StrtabContents = (UINT8*)Ehdr + StrtabShdr->sh_offset;
 
@@ -49,7 +49,7 @@ STATIC const UINT8* GetSymName(UINT8* ImageBase, Elf64_Sym* Sym) {
         foundEnd = (BOOLEAN)(StrtabContents[i] == 0);
     }
 
-    ASSERT_EFI_ERROR(foundEnd);
+    ASSERT(foundEnd);
 
     return StrtabContents + Sym->st_name;
 }

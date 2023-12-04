@@ -56,6 +56,7 @@ static void draw() {
 #define OP_DEC (2)
 
 MENU EnterSetupMenu() {
+    EFI_STATUS Status = EFI_SUCCESS;
     UINTN width = GetColumns();
     draw();
 
@@ -106,7 +107,8 @@ MENU EnterSetupMenu() {
         });
         EFI_GRAPHICS_OUTPUT_MODE_INFORMATION* info = NULL;
         UINTN sizeOfInfo = sizeof(EFI_GRAPHICS_OUTPUT_MODE_INFORMATION);
-        ASSERT_EFI_ERROR(gop->QueryMode(gop, config.GfxMode, &sizeOfInfo, &info));
+        Status = gop->QueryMode(gop, config.GfxMode, &sizeOfInfo, &info);
+        ASSERT_EFI_ERROR(Status);
         WriteAt(controls_start, control_line++, "Graphics Mode: %dx%d (BGRA8)", info->HorizontalResolution, info->VerticalResolution);
 
         /**
@@ -156,13 +158,14 @@ MENU EnterSetupMenu() {
 
         UINTN which = 0;
         EFI_INPUT_KEY key = {};
-        ASSERT_EFI_ERROR(gBS->WaitForEvent(1, &gST->ConIn->WaitForKey, &which));
-        EFI_STATUS status = gST->ConIn->ReadKeyStroke(gST->ConIn, &key);
-        if (status == EFI_NOT_READY) {
+        Status = gBS->WaitForEvent(1, &gST->ConIn->WaitForKey, &which);
+        ASSERT_EFI_ERROR(Status);
+        Status = gST->ConIn->ReadKeyStroke(gST->ConIn, &key);
+        if (Status == EFI_NOT_READY) {
             continue;
         }
 
-        ASSERT_EFI_ERROR(status);
+        ASSERT_EFI_ERROR(Status);
 
         if (key.UnicodeChar == L'-') {
             op = OP_DEC;

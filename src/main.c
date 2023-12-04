@@ -14,7 +14,6 @@
 
 // Define all constructors
 extern EFI_STATUS EFIAPI UefiBootServicesTableLibConstructor(IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE* SystemTable);
-extern EFI_STATUS EFIAPI DxeDebugLibConstructor(IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE* SystemTable);
 extern EFI_STATUS EFIAPI UefiRuntimeServicesTableLibConstructor(IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE* SystemTable);
 extern RETURN_STATUS EFIAPI AcpiTimerLibConstructor(VOID);
 
@@ -24,7 +23,6 @@ EFI_STATUS EFIAPI EfiMain(IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE* System
     EFI_STATUS Status = EFI_SUCCESS;
 
     // Call constructors
-    EFI_CHECK(DxeDebugLibConstructor(ImageHandle, SystemTable));
     EFI_CHECK(UefiBootServicesTableLibConstructor(ImageHandle, SystemTable));
     EFI_CHECK(UefiRuntimeServicesTableLibConstructor(ImageHandle, SystemTable));
 

@@ -1,5 +1,6 @@
-#include "GfxUtils.h"
+#include "DrawUtils.h"
 #include "Except.h"
+#include "GfxUtils.h"
 
 #include <Uefi.h>
 
@@ -8,8 +9,8 @@
 #include <Protocol/GraphicsOutput.h>
 
 static INT32 GetModeCommon(INT32 start, INT32 dir) {
-    EFI_GRAPHICS_OUTPUT_PROTOCOL* gop = NULL;
-    ASSERT_EFI_ERROR(gBS->LocateProtocol(&gEfiGraphicsOutputProtocolGuid, NULL, (VOID**)&gop));
+    EFI_STATUS Status = gBS->LocateProtocol(&gEfiGraphicsOutputProtocolGuid, NULL, (VOID**)&gop);
+    ASSERT_EFI_ERROR(Status);
 
     EFI_GRAPHICS_OUTPUT_MODE_INFORMATION* info = NULL;
     UINTN sizeOfInfo = sizeof(EFI_GRAPHICS_OUTPUT_MODE_INFORMATION);
@@ -41,7 +42,8 @@ static INT32 GetModeCommon(INT32 start, INT32 dir) {
         }
 
         // Make sure this is a supported format
-        ASSERT_EFI_ERROR(gop->QueryMode(gop, start, &sizeOfInfo, &info));
+        Status = gop->QueryMode(gop, start, &sizeOfInfo, &info);
+        ASSERT_EFI_ERROR(Status);
         if (info->PixelFormat == PixelBlueGreenRedReserved8BitPerColor) {
             break;
         }
@@ -63,8 +65,8 @@ INT32 GetPrevGfxMode(INT32 Current) {
 }
 
 INT32 GetBestGfxMode(UINT32 Width, UINT32 Height) {
-    EFI_GRAPHICS_OUTPUT_PROTOCOL* gop = NULL;
-    ASSERT_EFI_ERROR(gBS->LocateProtocol(&gEfiGraphicsOutputProtocolGuid, NULL, (VOID**)&gop));
+    EFI_STATUS Status = gBS->LocateProtocol(&gEfiGraphicsOutputProtocolGuid, NULL, (VOID**)&gop);
+    ASSERT_EFI_ERROR(Status);
 
     EFI_GRAPHICS_OUTPUT_MODE_INFORMATION* info = NULL;
     UINTN sizeOfInfo = sizeof(EFI_GRAPHICS_OUTPUT_MODE_INFORMATION);
@@ -74,7 +76,8 @@ INT32 GetBestGfxMode(UINT32 Width, UINT32 Height) {
     UINT32 BestHeight = 0;
     for (INTN i = 0; i < gop->Mode->MaxMode; ++i) {
         // Make sure that this is a supported format
-        ASSERT_EFI_ERROR(gop->QueryMode(gop, i, &sizeOfInfo, &info));
+        Status = gop->QueryMode(gop, i, &sizeOfInfo, &info);
+        ASSERT_EFI_ERROR(Status);
         if (info->PixelFormat != PixelBlueGreenRedReserved8BitPerColor) {
             continue;
         }

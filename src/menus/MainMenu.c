@@ -20,13 +20,16 @@
 #include <loaders/Loaders.h>
 
 static void draw() {
+    EFI_STATUS Status = EFI_SUCCESS;
     BOOT_CONFIG config;
     LoadBootConfig(&config);
 
-    ASSERT_EFI_ERROR(gBS->LocateProtocol(&gEfiGraphicsOutputProtocolGuid, NULL, (VOID**)&gop));
+    Status = gBS->LocateProtocol(&gEfiGraphicsOutputProtocolGuid, NULL, (VOID**)&gop);
+    ASSERT_EFI_ERROR(Status);
     EFI_GRAPHICS_OUTPUT_MODE_INFORMATION* info = NULL;
     UINTN sizeOfInfo = sizeof(EFI_GRAPHICS_OUTPUT_MODE_INFORMATION);
-    ASSERT_EFI_ERROR(gop->QueryMode(gop, config.GfxMode, &sizeOfInfo, &info));
+    Status = gop->QueryMode(gop, config.GfxMode, &sizeOfInfo, &info);
+    ASSERT_EFI_ERROR(Status);
 
     ClearScreen(WHITE);
 
@@ -35,7 +38,8 @@ static void draw() {
     WriteAt(3, 3, "Copyright (c) 2023, implicitfield");
 
     EFI_TIME time;
-    ASSERT_EFI_ERROR(gRT->GetTime(&time, NULL));
+    Status = gRT->GetTime(&time, NULL);
+    ASSERT_EFI_ERROR(Status);
     WriteAt(3, 5, "Current time: %02d/%02d/%d %02d:%02d", time.Day, time.Month, time.Year, time.Hour, time.Minute);
     WriteAt(3, 6, "Graphics mode: %dx%d", info->HorizontalResolution, info->VerticalResolution);
     if (gDefaultEntry != NULL) {
@@ -52,6 +56,7 @@ static void draw() {
 }
 
 MENU EnterMainMenu(BOOLEAN first) {
+    EFI_STATUS Status = EFI_SUCCESS;
     BOOT_CONFIG config;
     LoadBootConfig(&config);
 
@@ -69,10 +74,12 @@ MENU EnterMainMenu(BOOLEAN first) {
 
     INTN timeout_counter = INITIAL_TIMEOUT_COUNTER;
     EFI_EVENT events[2] = {gST->ConIn->WaitForKey};
-    ASSERT_EFI_ERROR(gBS->CreateEvent(EVT_TIMER, TPL_CALLBACK, NULL, NULL, &events[1]));
+    Status = gBS->CreateEvent(EVT_TIMER, TPL_CALLBACK, NULL, NULL, &events[1]);
+    ASSERT_EFI_ERROR(Status);
 
     if (first && ContainsKernel()) {
-        ASSERT_EFI_ERROR(gBS->SetTimer(events[1], TimerRelative, TIMER_INTERVAL));
+        Status = gBS->SetTimer(events[1], TimerRelative, TIMER_INTERVAL);
+        ASSERT_EFI_ERROR(Status);
     }
 
     UINTN count = 2;
@@ -80,19 +87,22 @@ MENU EnterMainMenu(BOOLEAN first) {
         // Wait for a key press
         UINTN which = 0;
         EFI_INPUT_KEY key = {};
-        ASSERT_EFI_ERROR(gBS->WaitForEvent(count, events, &which));
+        Status = gBS->WaitForEvent(count, events, &which);
+        ASSERT_EFI_ERROR(Status);
 
         if (which == 0) {
-            EFI_STATUS status = gST->ConIn->ReadKeyStroke(gST->ConIn, &key);
-            if (status == EFI_NOT_READY) {
+            Status = gST->ConIn->ReadKeyStroke(gST->ConIn, &key);
+            if (Status == EFI_NOT_READY) {
                 continue;
             }
-            ASSERT_EFI_ERROR(status);
+            ASSERT_EFI_ERROR(Status);
 
             // Cancel the timer and destroy it
             if (count == 2) {
-                ASSERT_EFI_ERROR(gBS->SetTimer(events[1], TimerCancel, 0));
-                ASSERT_EFI_ERROR(gBS->CloseEvent(events[1]));
+                Status = gBS->SetTimer(events[1], TimerCancel, 0);
+                ASSERT_EFI_ERROR(Status);
+                Status = gBS->CloseEvent(events[1]);
+                ASSERT_EFI_ERROR(Status);
                 count = 1;
 
                 // Clear the progress bar
@@ -113,7 +123,8 @@ MENU EnterMainMenu(BOOLEAN first) {
             // Timeout reached
             timeout_counter--;
             if (timeout_counter <= 0) {
-                ASSERT_EFI_ERROR(gBS->CloseEvent(events[1]));
+                Status = gBS->CloseEvent(events[1]);
+                ASSERT_EFI_ERROR(Status);
 
                 LoadKernel(config.DefaultOS > 0 ? GetKernelEntryAt(config.DefaultOS) : gDefaultEntry);
             } else {
@@ -127,7 +138,8 @@ MENU EnterMainMenu(BOOLEAN first) {
                 ActiveBackgroundColor = BackgroundColor;
 
                 // Restart the timer
-                ASSERT_EFI_ERROR(gBS->SetTimer(events[1], TimerRelative, TIMER_INTERVAL));
+                Status = gBS->SetTimer(events[1], TimerRelative, TIMER_INTERVAL);
+                ASSERT_EFI_ERROR(Status);
             }
         }
     } while (TRUE);

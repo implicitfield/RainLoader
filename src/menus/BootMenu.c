@@ -31,6 +31,7 @@ static const char* loader_names[] = {
 };
 
 MENU EnterBootMenu() {
+    EFI_STATUS Status = EFI_SUCCESS;
     UINTN width = GetColumns();
 
     draw();
@@ -74,12 +75,13 @@ MENU EnterBootMenu() {
 
         UINTN which = 0;
         EFI_INPUT_KEY key = {};
-        ASSERT_EFI_ERROR(gBS->WaitForEvent(1, &gST->ConIn->WaitForKey, &which));
-        EFI_STATUS status = gST->ConIn->ReadKeyStroke(gST->ConIn, &key);
-        if (status == EFI_NOT_READY) {
+        Status = gBS->WaitForEvent(1, &gST->ConIn->WaitForKey, &which);
+        ASSERT_EFI_ERROR(Status);
+        Status = gST->ConIn->ReadKeyStroke(gST->ConIn, &key);
+        if (Status == EFI_NOT_READY) {
             continue;
         }
-        ASSERT_EFI_ERROR(status);
+        ASSERT_EFI_ERROR(Status);
 
         if (key.ScanCode == SCAN_DOWN) {
             ++selected;

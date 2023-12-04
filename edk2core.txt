@@ -1,5 +1,5 @@
 edk2/MdePkg/Library/BaseCpuLib/X64/CpuSleepGcc.c
-edk2/MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.c
+edk2/MdePkg/Library/BaseDebugLibNull/DebugLib.c
 edk2/MdePkg/Library/BaseIoLibIntrinsic/IoHighLevel.c
 edk2/MdePkg/Library/BaseIoLibIntrinsic/IoLib.c
 edk2/MdePkg/Library/BaseIoLibIntrinsic/IoLibGcc.c
@@ -80,8 +80,6 @@ edk2/MdePkg/Library/CcProbeLibNull/CcProbeLibNull.c
 edk2/MdePkg/Library/RegisterFilterLibNull/RegisterFilterLibNull.c
 edk2/MdePkg/Library/TdxLib/TdxLibNull.c
 edk2/MdePkg/Library/UefiBootServicesTableLib/UefiBootServicesTableLib.c
-edk2/MdePkg/Library/UefiDebugLibConOut/DebugLib.c
-edk2/MdePkg/Library/UefiDebugLibConOut/DebugLibConstructor.c
 edk2/MdePkg/Library/UefiDevicePathLib/DevicePathFromText.c
 edk2/MdePkg/Library/UefiDevicePathLib/DevicePathToText.c
 edk2/MdePkg/Library/UefiDevicePathLib/DevicePathUtilities.c
