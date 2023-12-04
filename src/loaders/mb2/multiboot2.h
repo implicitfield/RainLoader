@@ -124,6 +124,12 @@ struct multiboot_header_tag_information_request
     multiboot_uint32_t requests[0];
 };
 
+struct multiboot2_start_tag
+{
+    multiboot_uint32_t size;
+    multiboot_uint32_t reserved;
+};
+
 struct multiboot_header_tag_address
 {
     multiboot_uint16_t type;

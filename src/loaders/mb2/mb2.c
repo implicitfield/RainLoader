@@ -162,8 +162,8 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
     BOOLEAN IsRelocatable = FALSE;
     BOOLEAN PassBootServices = FALSE; // Ignored without EFIEntryAddressOverride.
 
-    mBootParamsSize = 8;
-    mBootParamsBuffer = AllocatePool(8);
+    mBootParamsSize = sizeof(struct multiboot2_start_tag);
+    mBootParamsBuffer = AllocatePool(sizeof(struct multiboot2_start_tag));
 
     for (struct multiboot_header_tag* tag = (struct multiboot_header_tag*)(header + 1);
          tag < (struct multiboot_header_tag*)((UINTN)header + header->header_length) && tag->type != MULTIBOOT_HEADER_TAG_END;
@@ -425,10 +425,6 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
     TRACE("Allocating area for GDT");
     InitLinuxDescriptorTables();
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // No prints from here
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     UINT8 TmpMemoryMap[1];
     UINTN MemoryMapSize = sizeof(TmpMemoryMap);
     UINTN MapKey;
@@ -441,11 +437,21 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
     MemoryMapSize += EFI_PAGE_SIZE;
     EFI_MEMORY_DESCRIPTOR* MemoryMap = AllocatePool(MemoryMapSize);
 
-    // Allocate all the space we will need
-    UINT8* start_from = PushBootParams(NULL, OFFSET_OF(struct multiboot_tag_efi_mmap, efi_mmap) + MemoryMapSize + OFFSET_OF(struct multiboot_tag_mmap, entries) + MemoryMapSize + sizeof(struct multiboot_tag_basic_meminfo));
+    // clang-format off
+    UINTN remaining_size_for_tags = OFFSET_OF(struct multiboot_tag_efi_mmap, efi_mmap) + (DescriptorSize * 256) + \
+                                    OFFSET_OF(struct multiboot_tag_mmap, entries) + (256 * sizeof(struct multiboot_mmap_entry)) + \
+                                    sizeof(struct multiboot_tag_basic_meminfo) + \
+                                    sizeof(struct multiboot_tag);
+    // clang-format on
+
+    UINT8* start_from = PushBootParams(NULL, remaining_size_for_tags);
 
     EFI_CHECK(gBS->GetMemoryMap(&MemoryMapSize, MemoryMap, &MapKey, &DescriptorSize, &DescriptorVersion));
     UINTN EntryCount = (MemoryMapSize / DescriptorSize);
+
+    if (EntryCount > 256) {
+        CHECK_FAIL_TRACE("Can't handle more than 256 memory map entries");
+    }
 
     if (!PassBootServices || EFIEntryAddressOverride == 0) {
         EFI_CHECK(gBS->ExitBootServices(gImageHandle, MapKey));
@@ -480,6 +486,10 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
     struct multiboot_tag* end_tag = (struct multiboot_tag*)ALIGN_VALUE((UINTN)basic_meminfo + basic_meminfo->size, MULTIBOOT_TAG_ALIGN);
     end_tag->type = MULTIBOOT_TAG_TYPE_END;
     end_tag->size = sizeof(struct multiboot_tag);
+
+    struct multiboot2_start_tag* start_tag = (struct multiboot2_start_tag*)mBootParamsBuffer;
+    start_tag->size = ((UINTN)end_tag + end_tag->size) - (UINTN)mBootParamsBuffer;
+    start_tag->reserved = 0x00;
 
     if (PassBootServices && EFIEntryAddressOverride != 0) {
         JumpToAMD64MB2Kernel((void*)(EFIEntryAddressOverride), mBootParamsBuffer);
