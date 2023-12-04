@@ -15,7 +15,7 @@ EFI_STATUS LoadLinuxKernel(BOOT_KERNEL_ENTRY* Entry) {
     UINTN KernelSize = 0;
     UINT8* KernelImage = NULL;
 
-    Print(L"Loading kernel image\n");
+    TRACE("Loading kernel image");
     BOOT_MODULE Module = {
         .Path = Entry->Path,
         .Fs = Entry->Fs,
@@ -29,7 +29,7 @@ EFI_STATUS LoadLinuxKernel(BOOT_KERNEL_ENTRY* Entry) {
     SetupSize = (SetupSize + 1) * 512;
     CHECK(SetupSize < KernelSize);
     KernelSize -= SetupSize;
-    Print(L"Setup Size: 0x%x\n", SetupSize);
+    TRACE("Setup Size: 0x%x", SetupSize);
 
     UINT8* SetupBuf = LoadLinuxAllocateKernelSetupPages(EFI_SIZE_TO_PAGES(SetupSize));
     CHECK(SetupBuf != NULL);
@@ -42,7 +42,7 @@ EFI_STATUS LoadLinuxKernel(BOOT_KERNEL_ENTRY* Entry) {
 
     UINT64 KernelInitialSize = LoadLinuxGetKernelSize(SetupBuf, KernelSize);
     CHECK(KernelInitialSize != 0);
-    Print(L"Kernel size: 0x%x\n", KernelSize);
+    TRACE("Kernel size: 0x%x", KernelSize);
     UINT8* KernelBuf = LoadLinuxAllocateKernelPages(SetupBuf, EFI_SIZE_TO_PAGES(KernelInitialSize));
     CHECK(KernelBuf != NULL);
     CopyMem(KernelBuf, KernelImage + SetupSize, KernelSize);
@@ -53,11 +53,11 @@ EFI_STATUS LoadLinuxKernel(BOOT_KERNEL_ENTRY* Entry) {
     // Load command line arguments, if any
     CHAR8* CommandLineBuf = NULL;
     if (Entry->Cmdline) {
-        Print(L"Command line: `%s`\n", Entry->Cmdline);
         UINTN CommandLineSize = StrLen(Entry->Cmdline) + 1;
         CommandLineBuf = LoadLinuxAllocateCommandLinePages(EFI_SIZE_TO_PAGES(CommandLineSize));
         CHECK(CommandLineBuf != NULL);
         UnicodeStrToAsciiStrS(Entry->Cmdline, CommandLineBuf, StrLen(Entry->Cmdline) + 1);
+        TRACE("Command line: `%a`", CommandLineBuf);
     }
     EFI_CHECK(LoadLinuxSetCommandLine(SetupBuf, CommandLineBuf));
 
@@ -70,22 +70,21 @@ EFI_STATUS LoadLinuxKernel(BOOT_KERNEL_ENTRY* Entry) {
 
         UINT8* InitrdBase;
         LoadBootModule(InitrdModule, (UINTN*)&InitrdBase, &InitrdSize);
-        Print(L"Initrd size: 0x%x\n", InitrdSize);
+        TRACE("Initrd size: 0x%x", InitrdSize);
 
         InitrdBuf = LoadLinuxAllocateInitrdPages(SetupBuf, EFI_SIZE_TO_PAGES(InitrdSize));
         CHECK(InitrdBuf != NULL);
-        Print(L"Initrd Buf: 0x%p\n", InitrdBuf);
+        TRACE("Initrd Buf: 0x%p", InitrdBuf);
         CopyMem(InitrdBuf, InitrdBase, InitrdSize);
 
         FreePages(InitrdBase, EFI_SIZE_TO_PAGES(InitrdSize));
         InitrdBase = NULL;
     }
 
-    Print(L"Loading Initrd...");
+    TRACE("Loading Initrd...");
     EFI_CHECK(LoadLinuxSetInitrd(SetupBuf, InitrdBuf, InitrdSize));
-    Print(L" Done\n");
 
-    Print(L"Calling Linux");
+    TRACE("Calling Linux");
     EFI_CHECK(LoadLinux(KernelBuf, SetupBuf));
 
 cleanup:

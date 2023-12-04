@@ -4,15 +4,18 @@
 
 #include <Library/UefiLib.h>
 
+#include "DrawUtils.h"
+
 #ifndef __FILENAME__
 #    define __FILENAME__ __FILE__
 #endif
 
-void LinePrint(const CHAR8* fmt, ...);
+extern UINTN Row;
+extern UINTN Column;
 
-#define TRACE(fmt, ...) LinePrint("[*] " fmt, ##__VA_ARGS__);
-#define WARN(fmt, ...) LinePrint("[!] " fmt, ##__VA_ARGS__);
-#define ERROR(fmt, ...) LinePrint("[-] " fmt, ##__VA_ARGS__);
+#define TRACE(fmt, ...) WriteAt(Column, Row++, "[*] " fmt, ##__VA_ARGS__);
+#define WARN(fmt, ...) WriteAt(Column, Row++, "[!] " fmt, ##__VA_ARGS__);
+#define ERROR(fmt, ...) WriteAt(Column, Row++, "[-] " fmt, ##__VA_ARGS__);
 
 #define CHECK_ERROR_LABEL_TRACE(expr, error, label, fmt, ...)                    \
     do {                                                                         \

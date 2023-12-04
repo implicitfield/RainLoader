@@ -98,9 +98,9 @@ MENU EnterBootMenu() {
         } else if (key.UnicodeChar == CHAR_CARRIAGE_RETURN) {
             switch (selectedEntry->EntryType) {
                 case BOOT_ENTRY_KERNEL:
+                    ClearScreen(WHITE);
                     LoadKernel(selectedEntry->Entry);
-                    while (1)
-                        CpuSleep();
+                    CpuDeadLoop();
                     break;
                 case BOOT_ENTRY_ACTION:
                     BOOT_ACTION_ENTRY* ActionEntry = selectedEntry->Entry;
