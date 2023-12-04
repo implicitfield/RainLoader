@@ -10,6 +10,7 @@
 #include <config/BootConfig.h>
 #include <config/BootEntries.h>
 #include <menus/Menus.h>
+#include <util/Colors.h>
 #include <util/Except.h>
 
 // Define all constructors
@@ -42,7 +43,10 @@ EFI_STATUS EFIAPI EfiMain(IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE* System
 
     // Load boot configs and set the default one
     BOOT_CONFIG config;
-    LoadBootConfig(&config);
+    LoadBootConfig(&config); // Also initializes the framebuffer.
+
+    ClearScreen(WHITE);
+
     CHECK_AND_RETHROW(GetBootEntries(&gBootEntries));
     gDefaultEntry = GetKernelEntryAt(config.DefaultOS);
 
@@ -51,8 +55,7 @@ EFI_STATUS EFIAPI EfiMain(IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE* System
 cleanup:
     ASSERT_EFI_ERROR(Status);
 
-    while (1)
-        CpuSleep();
+    CpuDeadLoop();
 
     return EFI_SUCCESS;
 }

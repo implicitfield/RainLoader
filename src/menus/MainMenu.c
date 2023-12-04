@@ -1,10 +1,9 @@
 #include "Menus.h"
 
-#include <util/DrawUtils.h>
-
 #include <config/BootConfig.h>
 #include <config/BootEntries.h>
 #include <util/Colors.h>
+#include <util/DrawUtils.h>
 
 #include <Uefi.h>
 
@@ -24,8 +23,6 @@ static void draw() {
     BOOT_CONFIG config;
     LoadBootConfig(&config);
 
-    Status = gBS->LocateProtocol(&gEfiGraphicsOutputProtocolGuid, NULL, (VOID**)&gop);
-    ASSERT_EFI_ERROR(Status);
     EFI_GRAPHICS_OUTPUT_MODE_INFORMATION* info = NULL;
     UINTN sizeOfInfo = sizeof(EFI_GRAPHICS_OUTPUT_MODE_INFORMATION);
     Status = gop->QueryMode(gop, config.GfxMode, &sizeOfInfo, &info);
