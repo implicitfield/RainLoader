@@ -4,6 +4,7 @@
 #include <config/BootEntries.h>
 #include <util/Colors.h>
 #include <util/DrawUtils.h>
+#include <util/Halt.h>
 
 #include <Uefi.h>
 
@@ -59,8 +60,7 @@ MENU EnterMainMenu(BOOLEAN first) {
 
     if (config.BootDelay <= 0 && gDefaultEntry != NULL) {
         LoadKernel(gDefaultEntry);
-        while (1)
-            CpuSleep();
+        Halt();
     }
 
     draw();

@@ -12,6 +12,7 @@
 #include <menus/Menus.h>
 #include <util/Colors.h>
 #include <util/Except.h>
+#include <util/Halt.h>
 
 // Define all constructors
 extern EFI_STATUS EFIAPI UefiBootServicesTableLibConstructor(IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE* SystemTable);
@@ -55,7 +56,7 @@ EFI_STATUS EFIAPI EfiMain(IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE* System
 cleanup:
     ASSERT_EFI_ERROR(Status);
 
-    CpuDeadLoop();
+    Halt();
 
     return EFI_SUCCESS;
 }

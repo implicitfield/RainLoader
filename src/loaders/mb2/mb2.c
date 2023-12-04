@@ -20,6 +20,7 @@
 #include <util/Except.h>
 #include <util/FileUtils.h>
 #include <util/GfxUtils.h>
+#include <util/Halt.h>
 #include <util/MemUtils.h>
 
 #include <ElfLib.h>
@@ -491,9 +492,7 @@ EFI_STATUS LoadMB2Kernel(BOOT_KERNEL_ENTRY* Entry) {
         JumpToMB2Kernel((void*)EntryAddressOverride, mBootParamsBuffer);
     }
 
-    // Sleep if we ever return
-    while (1)
-        CpuSleep();
+    Halt();
 
 cleanup:
     if (header != NULL) {

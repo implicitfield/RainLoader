@@ -5,6 +5,8 @@
 #include <Library/BaseLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 
+#include <util/Halt.h>
+
 MENU EnterMainMenu(BOOLEAN first);
 MENU EnterSetupMenu();
 MENU EnterBootMenu();

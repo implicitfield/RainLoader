@@ -5,6 +5,8 @@
 #include <Library/LoadLinuxLib.h>
 #include <Library/MemoryAllocationLib.h>
 
+#include <util/Halt.h>
+
 /**
  * Implementation References
  * - https://github.com/qemu/qemu/blob/master/hw/i386/x86.c#L333
@@ -87,9 +89,12 @@ EFI_STATUS LoadLinuxKernel(BOOT_KERNEL_ENTRY* Entry) {
     TRACE("Calling Linux");
     EFI_CHECK(LoadLinux(KernelBuf, SetupBuf));
 
+    Halt();
+
 cleanup:
     if (KernelImage != NULL) {
         FreePages(KernelImage, KernelSize);
     }
+
     return Status;
 }

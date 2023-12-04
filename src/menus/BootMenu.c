@@ -3,6 +3,7 @@
 #include <config/BootEntries.h>
 #include <util/Colors.h>
 #include <util/DrawUtils.h>
+#include <util/Halt.h>
 
 #include <Uefi.h>
 
@@ -100,7 +101,7 @@ MENU EnterBootMenu() {
                 case BOOT_ENTRY_KERNEL:
                     ClearScreen(WHITE);
                     LoadKernel(selectedEntry->Entry);
-                    CpuDeadLoop();
+                    Halt();
                     break;
                 case BOOT_ENTRY_ACTION:
                     BOOT_ACTION_ENTRY* ActionEntry = selectedEntry->Entry;
