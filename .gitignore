@@ -1,4 +1,5 @@
 **/.DS_Store
 bin
 build
+edk2.c
 guids.c

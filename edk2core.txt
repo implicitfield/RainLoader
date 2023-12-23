@@ -1,4 +1,4 @@
-edk2/MdePkg/Library/BaseCpuLib/X64/CpuSleepGcc.c
+edk2/MdePkg/Library/BaseCpuLib/Ia32/CpuSleep.c
 edk2/MdePkg/Library/BaseDebugLibNull/DebugLib.c
 edk2/MdePkg/Library/BaseIoLibIntrinsic/IoHighLevel.c
 edk2/MdePkg/Library/BaseIoLibIntrinsic/IoLib.c
@@ -42,6 +42,7 @@ edk2/MdePkg/Library/BaseLib/SwapBytes32.c
 edk2/MdePkg/Library/BaseLib/SwapBytes64.c
 edk2/MdePkg/Library/BaseLib/Unaligned.c
 edk2/MdePkg/Library/BaseLib/X64/GccInline.c
+edk2/MdePkg/Library/BaseLib/X64/GccInlinePriv.c
 edk2/MdePkg/Library/BaseLib/X64/Non-existing.c
 edk2/MdePkg/Library/BaseLib/X86DisablePaging32.c
 edk2/MdePkg/Library/BaseLib/X86EnablePaging32.c

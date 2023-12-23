@@ -17,11 +17,11 @@ SRCS += $(shell find src -name '*.S')
 # Runtime support
 SRCS += $(shell find lib/runtime -name '*.c')
 
-# A hand-picked group of edk2 sources
-SRCS += $(shell cat edk2core.txt)
+# A hand-picked set of edk2 sources
+EDK2SRCS += $(shell cat edk2core.txt)
 
-# Make sure we build the guids c file if it does not exists
 SRCS += guids.c
+SRCS += edk2.c
 
 # Get the objects and their dirs
 OBJS := $(SRCS:%=./build/%.o)
@@ -34,10 +34,18 @@ UEFI_HDRS := $(shell find edk2/MdePkg/Include -name '*.h')
 # Include directories
 ########################################################################################################################
 
+INCLUDE_DIRS += edk2/MdePkg
 INCLUDE_DIRS += edk2/MdePkg/Include
-INCLUDE_DIRS += edk2/MdePkg/Library/BaseLib
 INCLUDE_DIRS += edk2/MdePkg/Include/X64
+INCLUDE_DIRS += edk2/MdePkg/Library/BaseLib
+INCLUDE_DIRS += edk2/MdePkg/Library/BaseIoLibIntrinsic
+INCLUDE_DIRS += edk2/MdePkg/Library/BaseMemoryLib
+INCLUDE_DIRS += edk2/MdePkg/Library/BasePrintLib
+INCLUDE_DIRS += edk2/MdePkg/Library/UefiDevicePathLib
+INCLUDE_DIRS += edk2/MdePkg/Library/UefiLib
 INCLUDE_DIRS += edk2/OvmfPkg/Include
+INCLUDE_DIRS += edk2/OvmfPkg/Library/LoadLinuxLib
+INCLUDE_DIRS += edk2/UefiPayloadPkg/PayloadLoaderPeim/ElfLib
 INCLUDE_DIRS += edk2/UefiPayloadPkg/PayloadLoaderPeim
 INCLUDE_DIRS += src/
 
@@ -93,6 +101,7 @@ CFLAGS := \
 	-Wall \
 	-Wextra \
 	-Wno-microsoft-static-assert \
+	-Wno-missing-braces \
 	-Os \
 	-flto \
 	-fno-PIC \
@@ -119,7 +128,7 @@ ASMFLAGS := \
 ########################################################################################################################
 
 clean:
-	rm -rf ./build ./bin
+	rm -rf ./build ./bin edk2.c guids.c
 
 clean-all: clean
 	rm -rf ./image
@@ -137,6 +146,11 @@ all: ./bin/BOOTX64.EFI
 	@mkdir -p $(@D)
 	@$(CLANG) $(LDFLAGS) -o $@ $(OBJS)
 
+./edk2.c: $(EDK2SRCS)
+	@echo Generating edk2 component build
+	@mkdir -p $(@D)
+	@python3 gen_edk2.py
+
 # We need to generate guids.c for edk2
 ./guids.c: $(UEFI_HDRS)
 	@echo Generating EFI guids
@@ -144,7 +158,7 @@ all: ./bin/BOOTX64.EFI
 	@python3 gen_guids.py
 
 # Add pcd flags for edk2 sources
-./build/edk2/%.c.o: edk2/%.c
+./build/edk2.c.o: edk2.c
 	@echo CC $@
 	@mkdir -p $(@D)
 	@$(CLANG) $(CFLAGS) $(EDK2_FLAGS) -c -o $@ $<
